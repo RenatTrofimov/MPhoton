@@ -5,10 +5,8 @@ import time
 
 import matplotlib.pyplot as plt
 ####################################################################
-
-
 @njit(parallel=True)
-def calculation(G, data, previousLayer,curentLayer, nextLayer):
+def calculation(G, data, previousLayer, curentLayer, nextLayer):
     ht = data[0]
     hx = data[1]
     hy = data[2]
@@ -24,17 +22,18 @@ def calculation(G, data, previousLayer,curentLayer, nextLayer):
             for k in prange(1,curentLayer.shape[2]-1):
                 suming = 0.0
                 cur = curentLayer[i,j,k]
+                prev = previousLayer[i,j,k]
                 cur2 = cur+cur
                 for r in prange(G.shape[0]):
                     suming += G[r]*np.sin((r+1)*cur)
-                nextValue = (cur2 - previousLayer[i,j,k])/ht2
-                + (curentLayer[i+1,j,k]-cur2+curentLayer[i-1,j,k])/(hx2)
+                next = (cur2 - prev)/ht2
+                + ((curentLayer[i+1,j,k]-cur2+curentLayer[i-1,j,k])/(hx2)
                 + (curentLayer[i,j+1,k]-cur2+curentLayer[i,j-1,k])/(hy2)
                 + (curentLayer[i,j,k+1]-cur2+curentLayer[i,j,k-1])/(hz2)
-                - F*((cur-previousLayer[i,j,k])/ht)**(2*p-1)
-                - suming
-                nextLayer[i,j,k] = nextValue*ht2
-    return nextLayer
+                - F*((cur-prev)/ht)**int(2*p-1)
+                - suming)
+                nextLayer[i,j,k] = next*ht2
+    #return np.copy(curentLayer), np.copy(nextLayer)
 @njit(parallel=True)
 def initLayers(initData, data, previousLayer,curentLayer):
     ht = data[0]
@@ -53,8 +52,6 @@ def initLayers(initData, data, previousLayer,curentLayer):
             for k in prange(1,curentLayer.shape[2]-1):
                 previousLayer[i,j,k] = np.exp(-(hz*(k-0.5*kz)/gamma)**2) * np.exp(-b*(hx*(i-0.5*kx)**2)) * np.exp(-b*(hy*(j-0.5*ky)**2))
                 curentLayer[i,j,k] = np.exp(-(hz*(k-0.5*kz-u*ht)/gamma)**2) * np.exp(-b*(hx*(i-0.5*kx)**2)) * np.exp(-b*(hy*(j-0.5*ky)**2))
-    
-    return previousLayer, curentLayer
 
 ###########################################################################
 initData = np.array([
@@ -66,8 +63,6 @@ initData = np.array([
     np.sqrt(1-0.93**2)
 ], dtype=np.float64)
 ###########################################################################
-curentLayer = np.arange(54000000).reshape(300, 300, 600)
-previousLayer = np.arange(54000000).reshape(300, 300, 600)
 data = np.array([0.01,
                 0.06,
                 0.06,
@@ -87,22 +82,33 @@ G = np.array([
                 0.029635502,
                 0.021892511
 ], dtype=np.float64)
-curentLayer = np.zeros((int(initData[0]), int(initData[1]), int(initData[2])), dtype=np.float64)
-previousLayer = np.zeros((int(initData[0]), int(initData[1]), int(initData[2])), dtype=np.float64)
-dummyZerosArray = np.zeros((int(initData[0]), int(initData[1]), int(initData[2])), dtype=np.float64)
+Layer = np.zeros((3, int(initData[0]), int(initData[1]), int(initData[2])), dtype=np.float64)
+
 ##############################################################################
 
 
-previousLayer, curentLayer = initLayers(initData, data, previousLayer, curentLayer)
+initLayers(initData, data, Layer[0,:,:,:], Layer[1,:,:,:])
+for k in range(9):
+    for i in range(50):
+        start = time.perf_counter()
+        calculation(G, data,  Layer[(0+i)%3,:,:,:],  Layer[(1+i)%3,:,:,:],  Layer[(2+i)%3,:,:,:])
+        #initLayers.parallel_diagnostics(level=4)
+        end = time.perf_counter()
+        #print("Elapsed (after compilation) = {}s".format((end - start)))
+    
+    Data = (Layer[(2+50-1)%3,:,:,:] - Layer[(1+50-1)%3,:,:,:])/data[0]
+    with open(f"{(k+1)*50}_1.txt", 'w') as outfile:
+   
+        outfile.write('# Array shape: {0}\n'.format(Data.shape))
+        
+        for data_slice in Data:
 
+            np.savetxt(outfile, data_slice, fmt='%-7.2f')
 
-print(np.sum(previousLayer))
-print(np.sum(curentLayer))
-for i in range(450):
-    start = time.perf_counter()
-    previousLayer = calculation(G, data, previousLayer,curentLayer, dummyZerosArray)
-    #initLayers.parallel_diagnostics(level=4)
-    end = time.perf_counter()
-    previousLayer, curentLayer = curentLayer, previousLayer
-    print(np.sum(curentLayer))
-    print("Elapsed (after compilation) = {}s".format((end - start)))
+##################################################################################################
+
+fig, ax = plt.subplots()
+
+ax.imshow(Layer[(1000)%3,:,int(initData[1]/2),:])
+
+plt.show()
