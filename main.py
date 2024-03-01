@@ -1,6 +1,7 @@
-from numba import njit, prange, vectorize, float64
+from numba import njit, prange, vectorize, ffloat64
 from numba import jit
 import numpy as np
+
 import time
 
 import matplotlib.pyplot as plt
@@ -61,7 +62,7 @@ initData = np.array([
     0.03,
     0.93,
     np.sqrt(1-0.93**2)
-], dtype=np.float64)
+], dtype=np.ffloat64)
 ###########################################################################
 data = np.array([0.01,
                 0.06,
@@ -69,7 +70,7 @@ data = np.array([0.01,
                 0.06,
                 0.0001,
                 2.0
-], dtype=np.float64)
+], dtype=np.ffloat64)
 
 G = np.array([
                 0.910946143,
@@ -81,8 +82,8 @@ G = np.array([
                 0.040572248,
                 0.029635502,
                 0.021892511
-], dtype=np.float64)
-Layer = np.zeros((3, int(initData[0]), int(initData[1]), int(initData[2])), dtype=np.float64)
+], dtype=np.ffloat64)
+Layer = np.zeros((3, int(initData[0]), int(initData[1]), int(initData[2])), dtype=np.ffloat64)
 
 ##############################################################################
 
@@ -97,7 +98,16 @@ for k in range(9):
         #print("Elapsed (after compilation) = {}s".format((end - start)))
     
     Data = (Layer[(2+50-1)%3,:,:,:] - Layer[(1+50-1)%3,:,:,:])/data[0]
-    with open(f"{(k+1)*50}_1.txt", 'w') as outfile:
+    with open(f"1_{(k+1)*50}.txt", 'w') as outfile:
+   
+        outfile.write('# Array shape: {0}\n'.format(Data.shape))
+        
+        for data_slice in Data:
+
+            np.savetxt(outfile, data_slice, fmt='%-7.2f')
+    
+    Data = (Layer[(2+50-1)%3,:,:,1:] - Layer[(1+50-1)%3,:,:,:-1])/data[3]
+    with open(f"2_{(k+1)*50}.txt", 'w') as outfile:
    
         outfile.write('# Array shape: {0}\n'.format(Data.shape))
         
@@ -106,9 +116,9 @@ for k in range(9):
             np.savetxt(outfile, data_slice, fmt='%-7.2f')
 
 ##################################################################################################
-
+""""
 fig, ax = plt.subplots()
 
 ax.imshow(Layer[(1000)%3,:,int(initData[1]/2),:])
 
-plt.show()
+plt.show()""""
