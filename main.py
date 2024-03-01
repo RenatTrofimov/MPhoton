@@ -106,7 +106,7 @@ for k in range(9):
 
             np.savetxt(outfile, data_slice, fmt='%-7.2f')
     
-    Data = (Layer[(2+50-1)%3,:,:,1:] - Layer[(1+50-1)%3,:,:,:-1])/data[3]
+    Data = (Layer[(1+50-1)%3,:,:,1:] - Layer[(1+50-1)%3,:,:,:-1])/data[3]
     with open(f"2_{(k+1)*50}.txt", 'w') as outfile:
    
         outfile.write('# Array shape: {0}\n'.format(Data.shape))
