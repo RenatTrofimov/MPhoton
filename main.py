@@ -1,4 +1,4 @@
-from numba import njit, prange, vectorize, ffloat64
+from numba import njit, prange, vectorize, float64
 from numba import jit
 import numpy as np
 
@@ -29,7 +29,7 @@ def calculation(G, data, previousLayer, curentLayer, nextLayer):
                     suming += G[r]*np.sin((r+1)*cur)
                 next = (cur2 - prev)/ht2
                 + ((curentLayer[i+1,j,k]-cur2+curentLayer[i-1,j,k])/(hx2)
-                + (curentLayer[i,j+1,k]-cur2+curentLayer[i,j-1,k])/(hy2)
+                + (curentLayer[i,j+1,k]-cur2+curentLayer[i,j-1,k])/(hx2)
                 + (curentLayer[i,j,k+1]-cur2+curentLayer[i,j,k-1])/(hz2)
                 - F*((cur-prev)/ht)**int(2*p-1)
                 - suming)
@@ -62,7 +62,7 @@ initData = np.array([
     0.03,
     0.93,
     np.sqrt(1-0.93**2)
-], dtype=np.ffloat64)
+], dtype=np.float64)
 ###########################################################################
 data = np.array([0.01,
                 0.06,
@@ -70,7 +70,7 @@ data = np.array([0.01,
                 0.06,
                 0.0001,
                 2.0
-], dtype=np.ffloat64)
+], dtype=np.float64)
 
 G = np.array([
                 0.910946143,
@@ -82,8 +82,8 @@ G = np.array([
                 0.040572248,
                 0.029635502,
                 0.021892511
-], dtype=np.ffloat64)
-Layer = np.zeros((3, int(initData[0]), int(initData[1]), int(initData[2])), dtype=np.ffloat64)
+], dtype=np.float64)
+Layer = np.zeros((3, int(initData[0]), int(initData[1]), int(initData[2])), dtype=np.float64)
 
 ##############################################################################
 
@@ -121,4 +121,5 @@ fig, ax = plt.subplots()
 
 ax.imshow(Layer[(1000)%3,:,int(initData[1]/2),:])
 
-plt.show()""""
+plt.show()
+"""
